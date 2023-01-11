@@ -1,0 +1,13 @@
+{
+  "realm": "hmo",
+  "auth-server-url": "http://localhost:3031/",
+  "bearer-only": true,
+  "ssl-required": "external",
+  "resource": "app",
+  "verify-token-audience": true,
+  "credentials": {
+    "secret": "BFlrXdWFbsf6Y4TqbTezuKNvfwABfZXt"
+  },
+  "confidential-port": 0,
+  "policy-enforcer": {}
+}
