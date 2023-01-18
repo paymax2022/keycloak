@@ -1,6 +1,8 @@
 FROM quay.io/keycloak/keycloak:latest
-COPY keycloak-server.crt.pem keycloak-server.crt.pem
-COPY keycloak-server.key.pem keycloak-server.key.pem
-RUN /opt/keycloak/bin/kc.sh build
 
-ENTRYPOINT /opt/keycloak/bin/kc.sh start --https-certificate-file=keycloak-server.crt.pem --https-certificate-key-file=keycloak-server.key.pem
+COPY keycloak.keystore /secret/keycloak.keystore
+COPY hmo-realm.json /opt/keycloak/data/import/hmo-realm.json
+
+ENTRYPOINT /opt/keycloak/bin/kc.sh start \
+    --import-realm \
+    --https-key-store-file=/secret/keycloak.keystore
