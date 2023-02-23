@@ -1,6 +1,6 @@
 {
   "realm": "hmo",
-  "auth-server-url": "http://localhost:3031/",
+  "auth-server-url": "http://auth.paymax.ng/",
   "bearer-only": true,
   "ssl-required": "external",
   "resource": "app",
