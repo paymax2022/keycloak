@@ -21,12 +21,11 @@ jobs:
       uses: digitalocean/action-doctl@v2
       with:
         token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-
-    - name: Build Docker Compose Image
+    - name: Build and push Docker images
       run: |
+          # Use docker-compose to build and push your images
           docker-compose build
-    - name: Build container image
-      run: docker tag keycloak_keycloak ${{ secrets.REGISTRY_NAME }}/keycloak-service:$(echo $GITHUB_SHA | head -c7) .
+          docker-compose push
 
     - name: Log in to DigitalOcean Container Registry with short-lived credentials
       run: doctl registry login --expiry-seconds 1200
