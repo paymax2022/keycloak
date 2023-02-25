@@ -1,50 +1,33 @@
-name: Build, push, and deploy
+name: Deploy to DOKS
 
 on:
   push:
     branches:
-      - master
-  pull_request:
-    branches:
-        - master
+      - main
+
+env:
+  DO_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
 jobs:
-  build:
-#
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout master
-      uses: actions/checkout@main
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Install doctl
-      uses: digitalocean/action-doctl@v2
-      with:
-        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-    - name: Build and push Docker images
-      run: |
+      - name: Setup doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ env.DIGITALOCEAN_ACCESS_TOKEN }}
+          version: latest
+
+      - name: Configure kubectl
+        run: |
+          doctl kubernetes cluster kubeconfig save  ${{ secrets.CLUSTER_NAME }}
+
+      - name: Build and push Docker images
+        run: |
           # Use docker-compose to build and push your images
           docker-compose build
           docker-compose push
-
-    - name: Log in to DigitalOcean Container Registry with short-lived credentials
-      run: doctl registry login --expiry-seconds 1200
-
-    - name: Push image to DigitalOcean Container Registry
-      run: docker push ${{ secrets.REGISTRY_NAME }}/keycloak-service:$(echo $GITHUB_SHA | head -c7)
-    - name: Update deployment file
-      run: TAG=$(echo $GITHUB_SHA | head -c7) && sed -i 's|<IMAGE>|${{ secrets.REGISTRY_NAME }}/keycloak-service:'${TAG}'|' k8s/manifest.yml
-    - name: Save DigitalOcean kubeconfig with short-lived credentials
-      run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.CLUSTER_NAME }}
-
-    - name: Deploy to DigitalOcean Kubernetes
-      run: kubectl apply -f k8s/manifest.yml
-
-    - name: Verify deployment
-      run: kubectl rollout status deployment/keycloak
-
-    - name: Remove old images from Container Registry
-      uses: ripplr-io/docr-image-remove@v1
-      with:
-        image_repository: ${{ secrets.REGISTRY_NAME }}/keycloak-service
-        buffer_size: 2
