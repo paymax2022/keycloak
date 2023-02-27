@@ -37,20 +37,12 @@ spec:
         - name: KEYCLOAK_ADMIN_PASSWORD
           value: admin
         ports:
-        - name: https
-          containerPort: 8443
+        - containerPort: 8443
         volumeMounts:
         - name: secret-volume
           mountPath: /secret
         - name: import-volume
           mountPath: /opt/keycloak/data/import
-      volumes:
-      - name: secret-volume
-        secret:
-          secretName: keycloak-secret
-      - name: import-volume
-        configMap:
-          name: keycloak-configmap
         resources:
           limits:
             cpu: "1"
@@ -58,6 +50,13 @@ spec:
           requests:
             cpu: "0.5"
             memory: "500Mi"
+      volumes:
+      - name: secret-volume
+        secret:
+          secretName: keycloak-secret
+      - name: import-volume
+        configMap:
+          name: keycloak-configmap
 ---
 apiVersion: v1
 kind: Service
