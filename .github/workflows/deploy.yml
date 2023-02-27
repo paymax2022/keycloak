@@ -23,12 +23,13 @@ jobs:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
           version: latest
 
-      - name: Configure kubectl
-        run: |
-          doctl kubernetes cluster kubeconfig save  ${{ secrets.CLUSTER_NAME }}
+      - name: Save DigitalOcean kubeconfig with short-lived credentials
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.CLUSTER_NAME }}
+      - name: config map and secrets for kubeconfig
+        run: kubectl create configmap keycloak-configmap --from-literal=keycloak.keystore="$(cat keycloak.keystore)" --from-literal=hmo-realm.json="$(cat hmo-realm.json)"
 
-      - name: Build and push Docker images
-        run: |
-          # Use docker-compose to build and push your images
-          docker-compose build
-          docker-compose push
+      - name: Deploy to DigitalOcean Kubernetes
+        run: kubectl apply -f k8s/manifest.yml
+
+      - name: Verify deployment
+        run: kubectl rollout status deployment/keycloak

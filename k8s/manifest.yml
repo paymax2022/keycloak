@@ -1,18 +1,139 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  labels:
+    app: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+      - name: keycloak
+        image: quay.io/keycloak/keycloak:latest
+        env:
+        - name: KC_DB
+          value: postgres
+        - name: KC_DB_URL
+          value: "jdbc:postgresql://postgres:5432/keycloak"
+        - name: KC_DB_USERNAME
+          value: postgres
+        - name: KC_DB_PASSWORD
+          value: postgres
+        - name: KC_HOSTNAME
+          value: "0.0.0.0"
+        - name: KC_HTTPS_KEY_STORE_PASSWORD
+          value: "123456"
+        - name: KEYCLOAK_ADMIN
+          value: admin
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          value: admin
+        ports:
+        - containerPort: 8443
+        volumeMounts:
+        - name: secret-volume
+          mountPath: /secret
+        - name: import-volume
+          mountPath: /opt/keycloak/data/import
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "0.5"
+            memory: "500Mi"
+      volumes:
+      - name: secret-volume
+        secret:
+          secretName: keycloak-secret
+      - name: import-volume
+        configMap:
+          name: keycloak-configmap
+---
 apiVersion: v1
 kind: Service
 metadata:
   name: keycloak-svc
-  labels:
-    app: keycloak-svc
 spec:
   type: ClusterIP
   ports:
   - port: 8443
-    protocol: TCP
+    targetPort: 8443
   selector:
     app: keycloak
 ---
-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:latest
+        env:
+        - name: POSTGRES_DB
+          value: keycloak
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          value: postgres
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: postgres-volume
+          mountPath: /var/lib/postgresql/data
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: "500Mi"
+          requests:
+            cpu: "0.25"
+            memory: "250Mi"
+      volumes:
+      - name: postgres-volume
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  ports:
+  - port: 5432
+    targetPort: 5432
+  selector:
+    app: postgres
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -32,28 +153,3 @@ spec:
             name: keycloak-svc
             port:
               number: 8443
-
-
-
-
----
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: keycloak
-spec:
-  selector:
-    matchLabels:
-      app: keycloak
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: keycloak
-    spec:
-      containers:
-      - name: keycloak
-        image: <IMAGE>
-        ports:
-        - containerPort: 8443
