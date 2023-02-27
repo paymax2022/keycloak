@@ -26,7 +26,9 @@ jobs:
       - name: Save DigitalOcean kubeconfig with short-lived credentials
         run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.CLUSTER_NAME }}
       - name: config map and secrets for kubeconfig
-        run: kubectl create configmap keycloak-configmap --from-literal=keycloak.keystore="$(cat keycloak.keystore)" --from-literal=hmo-realm.json="$(cat hmo-realm.json)"
+        run: |
+            kubectl create secret generic keycloak-secret --from-file=keycloak.keystore
+            kubectl create configmap keycloak-configmap --from-file=hmo-realm.json
 
       - name: Deploy to DigitalOcean Kubernetes
         run: kubectl apply -f k8s/manifest.yml
