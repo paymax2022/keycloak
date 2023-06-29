@@ -8,7 +8,7 @@
     "body-parser": "^1.13.3",
     "cors": "^2.8.1",
     "express": "^4.13.3",
-    "express-session": "^1.14.2",
+    "express-session": "^1.17.3",
     "keycloak-connect": "keycloak/keycloak-nodejs-connect",
     "keycloak-nodejs-connect": "^1.0.7"
   },
