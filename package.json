@@ -9,7 +9,7 @@
     "cors": "^2.8.1",
     "express": "^4.13.3",
     "express-session": "^1.14.2",
-    "keycloak-connect": "keycloak/keycloak-nodejs-connect",
+    "keycloak-connect": "22.0.0",
     "keycloak-nodejs-connect": "^1.0.7"
   },
   "devDependencies": {
